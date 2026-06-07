@@ -21,7 +21,7 @@
 ### 1. 克隆或下载项目
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/wulingfeng321/bjtu-campus-login.git
 cd bjtu-campus-login
 ```
 
