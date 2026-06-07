@@ -74,8 +74,7 @@ python login.py
 ```
 
 > 请将 `D:\bjtu-campus-login` 修改为实际项目目录。
-
-
+> 该文件已创建好，可使用记事本进行编辑
 
 #### 2. 添加到启动文件夹
 
@@ -130,7 +129,6 @@ pyinstaller -F login.py
 ```text
 dist/login.exe
 ```
-
 
 #### 3. 创建计划任务
 
