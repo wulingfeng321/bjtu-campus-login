@@ -39,7 +39,12 @@ pip install requests
 {
     "username": "你的学号",
     "password": "你的密码",
-    "check_interval": 60
+    "check_interval": 60,
+    "check_url": "https://www.baidu.com",
+    "local_ip_probe_host": "10.10.42.3",
+    "request_timeout": 10,
+    "network_timeout": 3,
+    "wlan_user_mac": "000000000000"
 }
 ```
 
@@ -49,7 +54,12 @@ pip install requests
 | ---------------- | ------------------ | ------ | ------ |
 | `username`       | 你的学号/账号      | 字符串 | 必填   |
 | `password`       | 你的密码           | 字符串 | 必填   |
-| `check_interval` | 网络检查间隔（秒） | 整数   | 60     |
+| `check_interval` | 网络检查间隔（秒），最小值 5 | 整数   | 60     |
+| `check_url` | 用于判断外网是否可访问的地址 | 字符串 | `https://www.baidu.com` |
+| `local_ip_probe_host` | 用于按路由表探测本机 IP 的地址，默认使用校园网认证服务器 | 字符串 | `10.10.42.3` |
+| `request_timeout` | 认证请求超时时间（秒） | 整数 | 10 |
+| `network_timeout` | 网络检测请求超时时间（秒） | 整数 | 3 |
+| `wlan_user_mac` | 认证请求中的 MAC 参数；通常保持默认即可 | 字符串 | `000000000000` |
 
 ## 使用方法（Windows）
 
@@ -203,7 +213,8 @@ sudo nano /etc/systemd/system/bjtu-campus.service
 ```ini
 [Unit]
 Description=BJTU Campus Login
-After=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=simple
@@ -212,6 +223,7 @@ WorkingDirectory=/home/pi/bjtu-campus-login
 ExecStart=/usr/bin/python3 /home/pi/bjtu-campus-login/login.py
 
 Restart=always
+RestartSec=10
 
 User=pi
 
@@ -335,6 +347,27 @@ A: 在运行程序的终端中按 `Ctrl + C` 或关闭终端窗口。
 A: 修改 `config.json` 中的 `check_interval` 值（单位：秒）。
 
 ## 故障排除
+
+### 树莓派日志连续重复“启动/网络断开”的排查
+
+如果日志像下面这样每隔 1 秒左右重复出现启动信息：
+
+```text
+[2026-06-09 17:00:11] 北京交通大学校园网自动登录器启动
+[2026-06-09 17:00:11] 网络断开，开始重新认证
+[2026-06-09 17:00:12] 北京交通大学校园网自动登录器启动
+```
+
+通常不是 `check_interval` 没生效，而是程序在认证前异常退出，然后被 `systemd` 的 `Restart=always` 立即拉起。旧版本在获取本机 IP 时固定探测 `8.8.8.8`，树莓派未认证校园网时可能没有公网路由，导致异常发生在登录异常捕获之外。
+
+当前版本已改为：
+
+- 优先探测校园网认证服务器 `10.10.42.3` 对应的本机出口 IP。
+- 获取 IP 失败时写入明确日志，并尝试从主机名解析兜底。
+- 将登录流程整体纳入异常捕获，避免认证前异常导致进程退出。
+- 认证时记录本机 IP、HTTP 状态码和异常响应片段，便于继续定位账号、密码、认证服务器或网络问题。
+- systemd 示例增加 `RestartSec=10`，避免故障时 1 秒内频繁重启刷日志。
+
 
 ### 导入错误：`ModuleNotFoundError: No module named 'requests'`
 

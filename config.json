@@ -1,5 +1,10 @@
 {
     "username": "你的学号",
     "password": "你的密码",
-    "check_interval": 60
+    "check_interval": 60,
+    "check_url": "https://www.baidu.com",
+    "local_ip_probe_host": "10.10.42.3",
+    "request_timeout": 10,
+    "network_timeout": 3,
+    "wlan_user_mac": "000000000000"
 }
